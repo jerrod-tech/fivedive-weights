@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a1a2e">
+<title>F&D Weights Hub</title>
+<style>
+:root {
+  --bg: #0f0f1a;
+  --card: #1a1a2e;
+  --card2: #16213e;
+  --accent: #e8b84b;
+  --accent2: #c8952b;
+  --green: #2ecc71;
+  --red: #e74c3c;
+  --yellow: #f39c12;
+  --blue: #3498db;
+  --purple: #9b59b6;
+  --text: #e8e8f0;
+  --text2: #9999bb;
+  --border: #2a2a4a;
+  --input-bg: #0f0f22;
+  --radius: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* NAV */
+.top-bar { background: var(--card); border-bottom: 2px solid var(--accent); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.top-bar h1 { font-size: 1.1rem; color: var(--accent); font-weight: 700; }
+.top-bar .version { font-size: 0.7rem; color: var(--text2); margin-left: 8px; }
+.sync-badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; background: var(--border); color: var(--text2); cursor: pointer; }
+.sync-badge.synced { background: #1a3a1a; color: var(--green); }
+.sync-badge.syncing { background: #1a2a3a; color: var(--blue); }
+.sync-badge.error { background: #3a1a1a; color: var(--red); }
+
+.tab-bar { display: flex; overflow-x: auto; background: var(--card2); border-bottom: 1px solid var(--border); gap: 2px; padding: 0 8px; scrollbar-width: none; }
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn { padding: 10px 14px; white-space: nowrap; background: none; border: none; color: var(--text2); cursor: pointer; font-size: 0.82rem; font-weight: 600; border-bottom: 3px solid transparent; transition: all 0.15s; }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-btn:hover { color: var(--text); }
+
+.page { display: none; padding: 12px; }
+.page.active { display: block; }
+
+/* DATE BAR */
+.date-bar { display: flex; align-items: center; gap: 10px; background: var(--card); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 12px; flex-wrap: wrap; }
+.date-bar label { color: var(--text2); font-size: 0.8rem; }
+.date-bar input[type=date], .date-bar select { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 8px; font-size: 0.85rem; }
+.date-bar .shift-toggle { display: flex; gap: 4px; }
+.shift-btn { padding: 5px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text2); cursor: pointer; font-size: 0.82rem; font-weight: 600; }
+.shift-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+/* CARDS */
+.card { background: var(--card); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.card-title { font-size: 0.9rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+.card-subtitle { font-size: 0.75rem; color: var(--text2); margin-top: 2px; }
+
+/* TABLES */
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.data-table th { background: var(--card2); color: var(--text2); padding: 6px 8px; text-align: center; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; border-bottom: 1px solid var(--border); }
+.data-table th:first-child { text-align: left; }
+.data-table td { padding: 5px 6px; text-align: center; border-bottom: 1px solid #1a1a30; vertical-align: middle; }
+.data-table td:first-child { text-align: left; font-weight: 600; }
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+.data-table tr.subtotal td { background: var(--card2); font-weight: 700; color: var(--accent); border-top: 1px solid var(--border); }
+.data-table input[type=number] { width: 58px; background: var(--input-bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 4px 6px; text-align: center; font-size: 0.82rem; }
+.data-table input[type=number]:focus { outline: none; border-color: var(--accent); }
+.data-table input.wide { width: 75px; }
+
+/* STATUS COLORS */
+.ok { color: var(--green); font-weight: 700; }
+.warn { color: var(--yellow); font-weight: 700; }
+.bad { color: var(--red); font-weight: 700; }
+.neutral { color: var(--text2); }
+
+/* POUR % BADGE */
+.pct-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; font-weight: 700; }
+.pct-ok { background: #1a3a1a; color: var(--green); }
+.pct-warn { background: #3a2a00; color: var(--yellow); }
+.pct-bad { background: #3a1a1a; color: var(--red); }
+
+/* SUMMARY ROW */
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.summary-cell { background: var(--card2); border-radius: 6px; padding: 10px 12px; border: 1px solid var(--border); }
+.summary-cell .label { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.summary-cell .value { font-size: 1.1rem; font-weight: 700; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: #000; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-secondary { background: var(--border); color: var(--text); }
+.btn-secondary:hover { background: #3a3a5a; }
+.btn-danger { background: #3a1a1a; color: var(--red); border: 1px solid var(--red); }
+.btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+.btn-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+
+/* SECTION LABEL */
+.section-label { font-size: 0.72rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 6px 0 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+
+/* PHOTO UPLOAD */
+.upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 20px; text-align: center; cursor: pointer; transition: all 0.15s; }
+.upload-zone:hover { border-color: var(--accent); background: rgba(232,184,75,0.05); }
+.upload-zone input { display: none; }
+.upload-zone .icon { font-size: 2rem; margin-bottom: 8px; }
+.upload-zone p { color: var(--text2); font-size: 0.82rem; }
+
+/* AI EXTRACT STATUS */
+.ai-status { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-size: 0.82rem; }
+.ai-status.loading { background: #1a2a3a; color: var(--blue); }
+.ai-status.success { background: #1a3a1a; color: var(--green); }
+.ai-status.error { background: #3a1a1a; color: var(--red); }
+
+/* HISTORY */
+.history-item { background: var(--card2); border-radius: 6px; padding: 12px; margin-bottom: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.history-meta { font-size: 0.78rem; color: var(--text2); margin-top: 4px; }
+.history-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* SETTINGS */
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+.setting-row label { font-size: 0.85rem; color: var(--text); }
+.setting-row input[type=text], .setting-row input[type=password] { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 10px; font-size: 0.82rem; width: 220px; }
+
+/* TOAST */
+#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #222240; border: 1px solid var(--border); border-radius: 8px; padding: 10px 20px; font-size: 0.85rem; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 90vw; text-align: center; }
+#toast.show { opacity: 1; }
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .data-table input[type=number] { width: 48px; }
+  .data-table { font-size: 0.78rem; }
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.api-key-row { display: flex; align-items: center; gap: 8px; }
+.api-key-row input { flex: 1; }
+
+/* Draught variance colors */
+.var-ok { color: var(--green); }
+.var-warn { color: var(--yellow); }
+.var-bad { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <h1>🍺 Weights Hub</h1>
+    <span class="version">v1.0</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span id="syncBadge" class="sync-badge" onclick="manualSync()">⟳ Sync</span>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('liquor')">Weight Sheet</button>
+  <button class="tab-btn" onclick="switchTab('draught')">Draught</button>
+  <button class="tab-btn" onclick="switchTab('bottles')">Bottles & Cans</button>
+  <button class="tab-btn" onclick="switchTab('pixel')">Pixel Rung In</button>
+  <button class="tab-btn" onclick="switchTab('bar')">BAR Summary</button>
+  <button class="tab-btn" onclick="switchTab('history')">History</button>
+  <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+</div>
+
+<!-- ============================================================ LIQUOR PAGE -->
+<div id="page-liquor" class="page active">
+  <div class="date-bar">
+    <div>
+      <label>Date</label><br>
+      <input type="date" id="liqDate" onchange="setCurrentDate(this.value)">
+    </div>
+    <div>
+      <label>Bar</label><br>
+      <input type="text" id="liqBar" placeholder="Bar name" style="background:var(--input-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:0.85rem;width:130px;" oninput="autoSave()">
+    </div>
+    <div class="shift-toggle">
+      <button class="shift-btn active" onclick="setShift('AM',this)">AM</button>
+      <button class="shift-btn" onclick="setShift('PM',this)">PM</button>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" onclick="showPhotoUpload('liquor')">📷 AI Extract</button>
+      <button class="btn btn-primary btn-sm" onclick="saveRecord()">💾 Save Record</button>
+    </div>
+  </div>
+
+  <!-- AI Upload zone (hidden by default) -->
+  <div id="uploadZone-liquor" style="display:none;" class="card">
+    <div class="card-title" style="margin-bottom:10px;">📷 AI Photo Extraction</div>
+    <div id="aiStatus-liquor"></div>
+    <div class="upload-zone" onclick="document.getElementById('photoInput-liquor').click()">
+      <input type="file" id="photoInput-liquor" accept="image/*" capture="environment" onchange="extractFromPhoto(this,'liquor')">
+      <div class="icon">📸</div>
+      <p>Tap to take photo of weight sheet</p>
+      <p style="margin-top:4px;font-size:0.75rem;">AI will fill in the values automatically</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Liquor Weights</div>
+        <div class="card-subtitle">Open & Close counts per type</div>
+      </div>
+    </div>
+
+    <div class="section-label">Opening Alcohol Weights</div>
+    <table class="data-table" style="margin-bottom:14px;">
+      <thead><tr>
+        <th>Type</th><th>Btls Open</th><th>Oz Open</th>
+      </tr></thead>
+      <tbody id="openLiquorBody"></tbody>
+    </table>
+
+    <div class="section-label">Close Alcohol Weights</div>
+    <table class="data-table" style="margin-bottom:14px;">
+      <thead><tr>
+        <th>Type</th><th>Btls Close</th><th>Oz Close</th>
+      </tr></thead>
+      <tbody id="closeLiquorBody"></tbody>
+    </table>
+
+    <div class="section-label">Requisitions</div>
+    <table class="data-table" style="margin-bottom:14px;">
+      <thead><tr>
+        <th>Type</th><th>Product(s)</th><th># Btls</th><th>Oz</th>
+      </tr></thead>
+      <tbody id="reqBody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="margin-bottom:10px;">Wine Counts</div>
+    <table class="data-table">
+      <thead><tr>
+        <th>Type</th><th>Open Box/Btl</th><th>Close Box/Btl</th><th>Changeover</th>
+      </tr></thead>
+      <tbody id="wineBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ DRAUGHT PAGE -->
+<div id="page-draught" class="page">
+  <div class="date-bar">
+    <span style="color:var(--text2);font-size:0.82rem;">Draught Calculations</span>
+    <div class="shift-toggle">
+      <button class="shift-btn active" id="draughtShiftAM" onclick="setShift('AM',this)">AM</button>
+      <button class="shift-btn" id="draughtShiftPM" onclick="setShift('PM',this)">PM</button>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="showPhotoUpload('draught')">📷 AI Extract</button>
+    </div>
+  </div>
+
+  <div id="uploadZone-draught" style="display:none;" class="card">
+    <div class="card-title" style="margin-bottom:10px;">📷 AI Photo Extraction — Pixel Report</div>
+    <div id="aiStatus-draught"></div>
+    <div class="upload-zone" onclick="document.getElementById('photoInput-draught').click()">
+      <input type="file" id="photoInput-draught" accept="image/*" capture="environment" onchange="extractFromPhoto(this,'draught')">
+      <div class="icon">📸</div>
+      <p>Tap to photograph Pixel draught report</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Draught Pour Control</div>
+        <div class="card-subtitle">Target sleeve: 14.5 oz | Range: 14–15.5 oz</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="data-table" id="draughtTable">
+      <thead><tr>
+        <th style="min-width:110px;">Brand</th>
+        <th>Sleeves<br><span style="font-size:0.65rem;font-weight:400;">(Pixel)</span></th>
+        <th>HH<br>Sleeves</th>
+        <th>32oz</th>
+        <th>64oz</th>
+        <th>Conv.<br>Oz</th>
+        <th>Pour<br>Oz</th>
+        <th>Variance</th>
+      </tr></thead>
+      <tbody id="draughtBody"></tbody>
+      <tfoot>
+        <tr class="subtotal">
+          <td>TOTALS</td>
+          <td id="dtTotalSleeves">0</td>
+          <td></td><td></td><td></td><td></td><td></td>
+          <td id="dtTotalVariance">—</td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;">
+      <div style="font-size:0.78rem;color:var(--text2);">
+        Conv. Oz = (Sleeves × 14.5) + (HH × 14.5) + (32oz × 30) + (64oz × 61)<br>
+        Variance = Pour Oz − Conv. Oz &nbsp;|&nbsp; <span class="var-ok">■</span> ≤ −0.5–1oz &nbsp;<span class="var-warn">■</span> outside range &nbsp;<span class="var-bad">■</span> significant
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ BOTTLES PAGE -->
+<div id="page-bottles" class="page">
+  <div class="date-bar">
+    <span style="color:var(--text2);font-size:0.82rem;">Bottles & Cans Inventory</span>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="showPhotoUpload('bottles')">📷 AI Extract</button>
+    </div>
+  </div>
+
+  <div id="uploadZone-bottles" style="display:none;" class="card">
+    <div class="card-title" style="margin-bottom:10px;">📷 AI Photo Extraction</div>
+    <div id="aiStatus-bottles"></div>
+    <div class="upload-zone" onclick="document.getElementById('photoInput-bottles').click()">
+      <input type="file" id="photoInput-bottles" accept="image/*" capture="environment" onchange="extractFromPhoto(this,'bottles')">
+      <div class="icon">📸</div>
+      <p>Tap to photograph bottles & cans sheet</p>
+    </div>
+  </div>
+
+  <div id="bottlesSections"></div>
+</div>
+
+<!-- ============================================================ PIXEL PAGE -->
+<div id="page-pixel" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Pixel Rung In</div>
+        <div class="card-subtitle">Enter category totals from EverServ Pixel report</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="showPhotoUpload('pixel')">📷 AI Extract</button>
+    </div>
+
+    <div id="uploadZone-pixel" style="display:none;margin-bottom:12px;">
+      <div id="aiStatus-pixel"></div>
+      <div class="upload-zone" onclick="document.getElementById('photoInput-pixel').click()">
+        <input type="file" id="photoInput-pixel" accept="image/*" capture="environment" onchange="extractFromPhoto(this,'pixel')">
+        <div class="icon">📸</div>
+        <p>Tap to photograph Pixel Profit by Summary Group report</p>
+      </div>
+    </div>
+
+    <div class="section-label">Premium Oz Rung In</div>
+    <table class="data-table" style="margin-bottom:14px;">
+      <thead><tr><th>Category</th><th>Singles</th><th>Doubles</th></tr></thead>
+      <tbody id="pixelPremiumBody"></tbody>
+    </table>
+
+    <div class="section-label">Tequila & Well Rung In</div>
+    <table class="data-table" style="margin-bottom:14px;">
+      <thead><tr><th>Category</th><th>Singles</th><th>Doubles</th></tr></thead>
+      <tbody id="pixelTequilaWellBody"></tbody>
+    </table>
+
+    <div class="section-label">Wine Rang In</div>
+    <table class="data-table" style="margin-bottom:14px;">
+      <thead><tr><th>Type</th><th>Qty Sold</th><th>Conv. Oz</th></tr></thead>
+      <tbody id="pixelWineBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ BAR SUMMARY PAGE -->
+<div id="page-bar" class="page">
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px;">BAR Summary — Calculated Results</div>
+    <div id="barSummaryContent"></div>
+  </div>
+</div>
+
+<!-- ============================================================ HISTORY PAGE -->
+<div id="page-history" class="page">
+  <div class="btn-bar">
+    <button class="btn btn-secondary btn-sm" onclick="loadHistory()">🔄 Refresh</button>
+  </div>
+  <div id="historyList"><p style="color:var(--text2);text-align:center;padding:30px;">No saved records yet.</p></div>
+</div>
+
+<!-- ============================================================ SETTINGS PAGE -->
+<div id="page-settings" class="page">
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px;">Settings</div>
+
+    <div class="setting-row">
+      <label>Anthropic API Key<br><span style="font-size:0.72rem;color:var(--text2);">For AI photo extraction</span></label>
+      <div class="api-key-row">
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+        <button class="btn btn-sm btn-primary" onclick="saveApiKey()">Save</button>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <label>Worker URL<br><span style="font-size:0.72rem;color:var(--text2);">Cloudflare D1 sync endpoint</span></label>
+      <input type="text" id="workerUrlInput" placeholder="https://...workers.dev">
+    </div>
+
+    <div class="setting-row">
+      <label>Sync Secret<br><span style="font-size:0.72rem;color:var(--text2);">X-FD-Secret value</span></label>
+      <input type="password" id="syncSecretInput" placeholder="FiveAndDive2024">
+    </div>
+
+    <div class="btn-bar" style="margin-top:14px;">
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+      <button class="btn btn-secondary" onclick="testConnection()">Test Connection</button>
+    </div>
+    <div id="connStatus" style="margin-top:8px;font-size:0.82rem;"></div>
+  </div>
+
+  <div class="card" style="margin-top:12px;">
+    <div class="card-title" style="margin-bottom:10px;">Data Management</div>
+    <div class="btn-bar">
+      <button class="btn btn-secondary btn-sm" onclick="exportData()">⬇ Export JSON</button>
+      <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑 Clear All Local Data</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// STATE & CONSTANTS
+// ============================================================
+
+const VERSION = 'v1.0';
+
+const LIQUOR_TYPES = [
+  { key: 'well', label: 'Well' },
+  { key: 'tequila', label: 'Tequila' },
+  { key: 'prem1', label: 'Premium' },
+  { key: 'prem2', label: 'Premium' },
+  { key: 'prem3', label: 'Premium' },
+  { key: 'prem4', label: 'Premium' },
+  { key: 'prem5', label: 'Premium' },
+  { key: 'prem6', label: 'Premium' },
+  { key: 'prem7', label: 'Premium' },
+];
+
+const DRAUGHT_BRANDS = [
+  'Winterale','Blue Moon','Coors Light','Bud Light','SC Red Ale',
+  'SC Prairie Fairy','Aprikat Ale','Canadian','Dinosour','Guinness',
+  'F&D Lager','F&D IPA','Pilsner','F&D Honey','Mangolorian',
+  'Somersby','GI IPA','PBR'
+];
+
+const WINE_TYPES = [
+  { key: 'boxRed1', label: 'Box Red 1' },
+  { key: 'boxRed2', label: 'Box Red 2' },
+  { key: 'boxRose', label: 'Box Rose' },
+  { key: 'boxWhite', label: 'Box White' },
+  { key: 'vintRed', label: 'Vintage Ink Red' },
+  { key: 'vintWhite', label: 'Vintage Ink White' },
+];
+
+// Bottles & Cans sections matching the Excel exactly
+const BOTTLES_SECTIONS = [
+  {
+    key: 'coolers', label: 'Coolers / Beer Bottles', totalLabel: 'COOLERS / BEER BOTTLES SOLD',
+    items: ['Simply Spiked','Ole Assorted','Twisted Tea','Coors Slushies','Smirnoff Ice','Coors Lt']
+  },
+  {
+    key: 'cans355', label: '355ml Cans', totalLabel: '355ML CANS SOLD',
+    items: ['Smirnoff Pink Lemonade','Miller High Life','Coors Original','Lucky','Pilsner','Canadian','Kokanee','Budweiser','Non Alcs Assorted']
+  },
+  {
+    key: 'bottles355', label: '355ml Bottles', totalLabel: '355ML BOTTLES SOLD',
+    items: ['Stella','Heineken','Michelob','Keiths','Corona','Strongbow','PBR']
+  },
+  {
+    key: 'tallboys', label: 'Tallboys', totalLabel: 'TALLBOYS SOLD',
+    items: ['SC Man Crush','SC Gremlin IPA','SC Deathwave','SC Wolf','Dinosour Assorted','Hi Cutie','Townsquare Apricot Tea','Townsquare Sangria Peach','Railyard Peach','Steigl Radler','88 Coffee Stout','Coronitas','Glutenberg']
+  },
+  {
+    key: 'redbull', label: 'Red Bull / Other', totalLabel: 'REDBULL SOLD',
+    items: ['Redbull','Jello Shots']
+  }
+];
+
+// Pixel categories
+const PIXEL_PREMIUM_CATS = [
+  'Cocktails','Classic Cocktails','Shots','Whiskey','Vodka','Gin','Rum',
+  'Drink Specials','Brunch Drinks','Event Specials','Month Features',
+  'Premium','Sig. Cocktails'
+];
+const PIXEL_WINE_TYPES = [
+  { key: 'boxRed', label: 'Box Red', ozPerUnit: 5 },
+  { key: 'boxRose', label: 'Box Rose', ozPerUnit: 5 },
+  { key: 'boxWhite', label: 'Box White', ozPerUnit: 5 },
+  { key: 'vintRed', label: 'Vintage Red', ozPerUnit: 5 },
+  { key: 'vintWhite', label: 'Vintage White', ozPerUnit: 5 },
+];
+
+// REQ rows — 8 well + 2 tequila + 13 premium
+const REQ_ROWS = [
+  ...Array(8).fill(null).map((_,i)=>({key:`reqWell${i}`,type:'Well'})),
+  ...Array(2).fill(null).map((_,i)=>({key:`reqTequila${i}`,type:'Tequila'})),
+  ...Array(13).fill(null).map((_,i)=>({key:`reqPrem${i}`,type:'Premium'})),
+];
+
+let STATE = defaultState();
+let currentShift = 'AM';
+let autoSaveTimer = null;
+let lastSyncTime = null;
+
+function defaultState() {
+  return {
+    currentDate: todayStr(),
+    currentBar: '',
+    currentShift: 'AM',
+    liquor: { open: {}, close: {}, reqs: {} },
+    wine: { open: {}, close: {}, changeover: {} },
+    draught: {},
+    bottles: {},
+    pixel: { premium: {}, tequilaWell: {}, wine: {} },
+    records: {}
+  };
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', () => {
+  loadSettings();
+  loadStateFromStorage();
+  renderAllSections();
+  document.getElementById('liqDate').value = STATE.currentDate;
+  document.getElementById('liqBar').value = STATE.currentBar || '';
+  setShiftUI(STATE.currentShift || 'AM');
+  loadHistory();
+  scheduleSyncPull();
+});
+
+function renderAllSections() {
+  renderOpenLiquor();
+  renderCloseLiquor();
+  renderReqs();
+  renderWine();
+  renderDraught();
+  renderBottles();
+  renderPixel();
+  renderBarSummary();
+}
+
+// ============================================================
+// LIQUOR RENDERING
+// ============================================================
+function renderOpenLiquor() {
+  const tb = document.getElementById('openLiquorBody');
+  tb.innerHTML = LIQUOR_TYPES.map(t => {
+    const btl = STATE.liquor.open[t.key+'_btl'] || '';
+    const oz = STATE.liquor.open[t.key+'_oz'] || '';
+    return `<tr>
+      <td>${t.label}</td>
+      <td><input type="number" min="0" step="0.5" value="${btl}" oninput="setLiquor('open','${t.key}_btl',this.value)"></td>
+      <td><input type="number" min="0" step="0.1" value="${oz}" oninput="setLiquor('open','${t.key}_oz',this.value)" class="wide"></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCloseLiquor() {
+  const tb = document.getElementById('closeLiquorBody');
+  tb.innerHTML = LIQUOR_TYPES.map(t => {
+    const btl = STATE.liquor.close[t.key+'_btl'] || '';
+    const oz = STATE.liquor.close[t.key+'_oz'] || '';
+    return `<tr>
+      <td>${t.label}</td>
+      <td><input type="number" min="0" step="0.5" value="${btl}" oninput="setLiquor('close','${t.key}_btl',this.value)"></td>
+      <td><input type="number" min="0" step="0.1" value="${oz}" oninput="setLiquor('close','${t.key}_oz',this.value)" class="wide"></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderReqs() {
+  const tb = document.getElementById('reqBody');
+  tb.innerHTML = REQ_ROWS.map(r => {
+    const prod = STATE.liquor.reqs[r.key+'_prod'] || '';
+    const btl = STATE.liquor.reqs[r.key+'_btl'] || '';
+    const oz = STATE.liquor.reqs[r.key+'_oz'] || '';
+    return `<tr>
+      <td>${r.type}</td>
+      <td><input type="text" style="width:120px;background:var(--input-bg);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:4px 6px;font-size:0.8rem;" value="${escHtml(prod)}" placeholder="Product..." oninput="setReq('${r.key}_prod',this.value)"></td>
+      <td><input type="number" min="0" step="1" value="${btl}" oninput="setReq('${r.key}_btl',this.value)"></td>
+      <td><input type="number" min="0" step="0.1" value="${oz}" oninput="setReq('${r.key}_oz',this.value)" class="wide"></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderWine() {
+  const tb = document.getElementById('wineBody');
+  tb.innerHTML = WINE_TYPES.map(w => {
+    const open = STATE.wine.open[w.key] || '';
+    const close = STATE.wine.close[w.key] || '';
+    const changeover = STATE.wine.changeover[w.key] || '';
+    return `<tr>
+      <td>${w.label}</td>
+      <td><input type="number" min="0" step="0.1" value="${open}" oninput="setWine('open','${w.key}',this.value)" class="wide"></td>
+      <td><input type="number" min="0" step="0.1" value="${close}" oninput="setWine('close','${w.key}',this.value)" class="wide"></td>
+      <td><input type="number" min="0" step="0.1" value="${changeover}" oninput="setWine('changeover','${w.key}',this.value)" class="wide"></td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// DRAUGHT RENDERING
+// ============================================================
+function renderDraught() {
+  const tb = document.getElementById('draughtBody');
+  tb.innerHTML = DRAUGHT_BRANDS.map(brand => {
+    const key = brandKey(brand);
+    const d = STATE.draught[key] || {};
+    const sleeves = parseFloat(d.sleeves) || 0;
+    const hh = parseFloat(d.hh) || 0;
+    const oz32 = parseFloat(d.oz32) || 0;
+    const oz64 = parseFloat(d.oz64) || 0;
+    const convOz = (sleeves * 14.5) + (hh * 14.5) + (oz32 * 30) + (oz64 * 61);
+    const pourOz = parseFloat(d.pourOz) || 0;
+    const variance = pourOz > 0 || convOz > 0 ? pourOz - convOz : null;
+
+    let varClass = 'neutral', varStr = '—';
+    if (variance !== null) {
+      varStr = variance.toFixed(1);
+      // Acceptable: under -0.5 per drink (under-pour) to +1 per drink (over-pour)
+      // Per brand: variance within sleeves * -0.5 to sleeves * 1.0
+      const acceptUnder = sleeves * -0.5;
+      const acceptOver = sleeves * 1.0;
+      if (variance >= acceptUnder && variance <= acceptOver) varClass = 'var-ok';
+      else if (variance < acceptUnder * 1.5 || variance > acceptOver * 1.5) varClass = 'var-bad';
+      else varClass = 'var-warn';
+    }
+
+    return `<tr>
+      <td>${brand}</td>
+      <td><input type="number" min="0" step="1" value="${d.sleeves||''}" oninput="setDraught('${key}','sleeves',this.value)"></td>
+      <td><input type="number" min="0" step="1" value="${d.hh||''}" oninput="setDraught('${key}','hh',this.value)"></td>
+      <td><input type="number" min="0" step="1" value="${d.oz32||''}" oninput="setDraught('${key}','oz32',this.value)"></td>
+      <td><input type="number" min="0" step="1" value="${d.oz64||''}" oninput="setDraught('${key}','oz64',this.value)"></td>
+      <td class="${convOz>0?'ok':'neutral'}">${convOz>0?convOz.toFixed(1):'—'}</td>
+      <td><input type="number" min="0" step="0.1" value="${d.pourOz||''}" oninput="setDraught('${key}','pourOz',this.value)" class="wide"></td>
+      <td class="${varClass}">${varStr}</td>
+    </tr>`;
+  }).join('');
+  updateDraughtTotals();
+}
+
+function updateDraughtTotals() {
+  let totalSleeves = 0;
+  DRAUGHT_BRANDS.forEach(brand => {
+    const d = STATE.draught[brandKey(brand)] || {};
+    totalSleeves += parseFloat(d.sleeves) || 0;
+  });
+  document.getElementById('dtTotalSleeves').textContent = totalSleeves || '0';
+}
+
+function brandKey(b) { return b.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase(); }
+
+// ============================================================
+// BOTTLES & CANS RENDERING
+// ============================================================
+function renderBottles() {
+  const container = document.getElementById('bottlesSections');
+  container.innerHTML = BOTTLES_SECTIONS.map(section => {
+    const rows = section.items.map(item => {
+      const key = section.key + '_' + item.replace(/[^a-zA-Z0-9]/g,'_');
+      const d = STATE.bottles[key] || {};
+      const open = parseFloat(d.open) || 0;
+      const req = parseFloat(d.req) || 0;
+      const total = open + req;
+      const close = parseFloat(d.close) || 0;
+      const usage = total - close;
+      const ringedIn = parseFloat(d.ringedIn) || 0;
+      const variance = ringedIn - usage; // AM +/-
+
+      let varClass = 'neutral';
+      if (Math.abs(variance) === 0) varClass = 'ok';
+      else if (Math.abs(variance) <= 2) varClass = 'warn';
+      else varClass = 'bad';
+
+      return `<tr>
+        <td>${item}</td>
+        <td><input type="number" min="0" step="1" value="${d.open||''}" oninput="setBottle('${key}','open',this.value)"></td>
+        <td><input type="number" min="0" step="1" value="${d.req||''}" oninput="setBottle('${key}','req',this.value)"></td>
+        <td class="${total>0?'ok':'neutral'}">${total||'0'}</td>
+        <td><input type="number" min="0" step="1" value="${d.close||''}" oninput="setBottle('${key}','close',this.value)"></td>
+        <td class="${usage>0?'ok':'neutral'}">${usage}</td>
+        <td><input type="number" min="0" step="1" value="${d.ringedIn||''}" oninput="setBottle('${key}','ringedIn',this.value)"></td>
+        <td class="${varClass}">${variance>=0?'+'+variance:variance}</td>
+      </tr>`;
+    }).join('');
+
+    // Section totals
+    let totOpen=0,totReq=0,totTotal=0,totClose=0,totUsage=0,totRinged=0,totVariance=0;
+    section.items.forEach(item => {
+      const key = section.key + '_' + item.replace(/[^a-zA-Z0-9]/g,'_');
+      const d = STATE.bottles[key] || {};
+      const o = parseFloat(d.open)||0, r=parseFloat(d.req)||0;
+      const tot=o+r, c=parseFloat(d.close)||0, u=tot-c, ri=parseFloat(d.ringedIn)||0;
+      totOpen+=o; totReq+=r; totTotal+=tot; totClose+=c; totUsage+=u; totRinged+=ri; totVariance+=(ri-u);
+    });
+
+    return `<div class="card">
+      <div class="card-title" style="margin-bottom:8px;">${section.label}</div>
+      <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr>
+          <th>Item</th><th>Open</th><th>Req</th><th>Total</th>
+          <th>Close</th><th>Usage</th><th>Rung In</th><th>+/−</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr class="subtotal">
+            <td>${section.totalLabel}</td>
+            <td>${totOpen}</td><td>${totReq}</td><td>${totTotal}</td>
+            <td>${totClose}</td><td>${totUsage}</td><td>${totRinged}</td>
+            <td class="${totVariance===0?'ok':Math.abs(totVariance)<=3?'warn':'bad'}">${totVariance>=0?'+'+totVariance:totVariance}</td>
+          </tr>
+        </tfoot>
+      </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// PIXEL RENDERING
+// ============================================================
+function renderPixel() {
+  // Premium
+  document.getElementById('pixelPremiumBody').innerHTML = PIXEL_PREMIUM_CATS.map(cat => {
+    const key = cat.replace(/[^a-zA-Z0-9]/g,'_');
+    const s = STATE.pixel.premium[key+'_s'] || '';
+    const d = STATE.pixel.premium[key+'_d'] || '';
+    return `<tr>
+      <td>${cat}</td>
+      <td><input type="number" min="0" step="1" value="${s}" oninput="setPixel('premium','${key}_s',this.value)"></td>
+      <td><input type="number" min="0" step="1" value="${d}" oninput="setPixel('premium','${key}_d',this.value)"></td>
+    </tr>`;
+  }).join('');
+
+  // Tequila + Well
+  document.getElementById('pixelTequilaWellBody').innerHTML = [
+    {label:'Tequila Rung In', key:'tequila'},
+    {label:'Well Rung In', key:'well'},
+    {label:'Bombs (Doubles)', key:'bombs'}
+  ].map(row => {
+    const s = STATE.pixel.tequilaWell[row.key+'_s'] || '';
+    const d = STATE.pixel.tequilaWell[row.key+'_d'] || '';
+    return `<tr>
+      <td>${row.label}</td>
+      <td><input type="number" min="0" step="1" value="${s}" oninput="setPixel('tequilaWell','${row.key}_s',this.value)"></td>
+      <td><input type="number" min="0" step="1" value="${d}" oninput="setPixel('tequilaWell','${row.key}_d',this.value)"></td>
+    </tr>`;
+  }).join('');
+
+  // Wine
+  document.getElementById('pixelWineBody').innerHTML = PIXEL_WINE_TYPES.map(w => {
+    const qty = STATE.pixel.wine[w.key] || '';
+    const convOz = (parseFloat(qty)||0) * w.ozPerUnit;
+    return `<tr>
+      <td>${w.label}</td>
+      <td><input type="number" min="0" step="1" value="${qty}" oninput="setPixel('wine','${w.key}',this.value)"></td>
+      <td class="${convOz>0?'ok':'neutral'}">${convOz>0?convOz.toFixed(1):'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// BAR SUMMARY — mirrors Excel BAR tab logic
+// ============================================================
+function renderBarSummary() {
+  const el = document.getElementById('barSummaryContent');
+
+  // --- WELL ---
+  const wellOpenBtl = parseFloat(STATE.liquor.open['well_btl'])||0;
+  const wellOpenOz = parseFloat(STATE.liquor.open['well_oz'])||0;
+  const wellReqBtl = sumReqByType('Well','btl');
+  const wellReqOz = sumReqByType('Well','oz');
+  const wellTotalBtl = wellOpenBtl + wellReqBtl;
+  const wellTotalOz = wellOpenOz + wellReqOz;
+  const wellCloseBtl = parseFloat(STATE.liquor.close['well_btl'])||0;
+  const wellCloseOz = parseFloat(STATE.liquor.close['well_oz'])||0;
+  const wellPoured = wellTotalOz - wellCloseOz;
+  const wellRingedIn = calcWellRingedIn();
+  const wellOverUnder = wellRingedIn - wellPoured;
+  const wellPct = wellRingedIn > 0 ? (wellPoured / wellRingedIn) : null;
+
+  // --- TEQUILA ---
+  const teqOpenBtl = parseFloat(STATE.liquor.open['tequila_btl'])||0;
+  const teqOpenOz = parseFloat(STATE.liquor.open['tequila_oz'])||0;
+  const teqReqBtl = sumReqByType('Tequila','btl');
+  const teqReqOz = sumReqByType('Tequila','oz');
+  const teqTotalBtl = teqOpenBtl + teqReqBtl;
+  const teqTotalOz = teqOpenOz + teqReqOz;
+  const teqCloseBtl = parseFloat(STATE.liquor.close['tequila_btl'])||0;
+  const teqCloseOz = parseFloat(STATE.liquor.close['tequila_oz'])||0;
+  const teqPoured = teqTotalOz - teqCloseOz;
+  const teqRingedIn = calcTequilaRingedIn();
+  const teqOverUnder = teqRingedIn - teqPoured;
+  const teqPct = teqRingedIn > 0 ? (teqPoured / teqRingedIn) : null;
+
+  // --- PREMIUM ---
+  const premOpenBtl = sumPremiumOpen('btl');
+  const premOpenOz = sumPremiumOpen('oz');
+  const premReqBtl = sumReqByType('Premium','btl');
+  const premReqOz = sumReqByType('Premium','oz');
+  const premTotalBtl = premOpenBtl + premReqBtl;
+  const premTotalOz = premOpenOz + premReqOz;
+  const premCloseBtl = sumPremiumClose('btl');
+  const premCloseOz = sumPremiumClose('oz');
+  const premPoured = premTotalOz - premCloseOz;
+  const premRingedIn = calcPremiumRingedIn();
+  const premOverUnder = premRingedIn - premPoured;
+  const premPct = premRingedIn > 0 ? (premPoured / premRingedIn) : null;
+
+  function pctBadge(pct) {
+    if (pct === null) return '<span class="pct-badge" style="background:var(--border);color:var(--text2);">—</span>';
+    const p = (pct*100).toFixed(1);
+    if (pct >= 0.94 && pct <= 0.97) return `<span class="pct-badge pct-ok">${p}% ✓</span>`;
+    if (pct > 0.97) return `<span class="pct-badge pct-warn">${p}% ▲</span>`;
+    return `<span class="pct-badge pct-bad">${p}% ✗</span>`;
+  }
+
+  el.innerHTML = `
+    <div class="section-label">Liquor Over / Under</div>
+    <table class="data-table" style="margin-bottom:16px;">
+      <thead><tr><th>Category</th><th>Open Btl</th><th>Open Oz</th><th>Reqs Btl</th><th>Reqs Oz</th><th>Total Oz</th><th>Close Oz</th><th>Poured</th><th>Rung In</th><th>+/−</th><th>Pour %</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>WELL</strong></td>
+          <td>${wellOpenBtl}</td><td>${wellOpenOz.toFixed(1)}</td>
+          <td>${wellReqBtl}</td><td>${wellReqOz.toFixed(1)}</td>
+          <td>${wellTotalOz.toFixed(1)}</td><td>${wellCloseOz.toFixed(1)}</td>
+          <td>${wellPoured.toFixed(1)}</td><td>${wellRingedIn.toFixed(1)}</td>
+          <td class="${wellOverUnder>=0?'ok':'bad'}">${wellOverUnder>=0?'+':' '}${wellOverUnder.toFixed(1)}</td>
+          <td>${pctBadge(wellPct)}</td>
+        </tr>
+        <tr>
+          <td><strong>TEQUILA</strong></td>
+          <td>${teqOpenBtl}</td><td>${teqOpenOz.toFixed(1)}</td>
+          <td>${teqReqBtl}</td><td>${teqReqOz.toFixed(1)}</td>
+          <td>${teqTotalOz.toFixed(1)}</td><td>${teqCloseOz.toFixed(1)}</td>
+          <td>${teqPoured.toFixed(1)}</td><td>${teqRingedIn.toFixed(1)}</td>
+          <td class="${teqOverUnder>=0?'ok':'bad'}">${teqOverUnder>=0?'+':' '}${teqOverUnder.toFixed(1)}</td>
+          <td>${pctBadge(teqPct)}</td>
+        </tr>
+        <tr>
+          <td><strong>PREMIUM</strong></td>
+          <td>${premOpenBtl}</td><td>${premOpenOz.toFixed(1)}</td>
+          <td>${premReqBtl}</td><td>${premReqOz.toFixed(1)}</td>
+          <td>${premTotalOz.toFixed(1)}</td><td>${premCloseOz.toFixed(1)}</td>
+          <td>${premPoured.toFixed(1)}</td><td>${premRingedIn.toFixed(1)}</td>
+          <td class="${premOverUnder>=0?'ok':'bad'}">${premOverUnder>=0?'+':' '}${premOverUnder.toFixed(1)}</td>
+          <td>${pctBadge(premPct)}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size:0.78rem;color:var(--text2);margin-bottom:16px;">
+      ⚠️ Pour % must be within <strong style="color:var(--accent);">94%–97%</strong>
+    </div>
+    ${renderBottlesSummary()}
+    ${renderDraughtSummaryBar()}
+  `;
+}
+
+function sumReqByType(type, field) {
+  let total = 0;
+  REQ_ROWS.filter(r => r.type === type).forEach(r => {
+    total += parseFloat(STATE.liquor.reqs[r.key+'_'+field]) || 0;
+  });
+  return total;
+}
+
+function sumPremiumOpen(field) {
+  let total = 0;
+  LIQUOR_TYPES.filter(t => t.key.startsWith('prem')).forEach(t => {
+    total += parseFloat(STATE.liquor.open[t.key+'_'+field]) || 0;
+  });
+  return total;
+}
+
+function sumPremiumClose(field) {
+  let total = 0;
+  LIQUOR_TYPES.filter(t => t.key.startsWith('prem')).forEach(t => {
+    total += parseFloat(STATE.liquor.close[t.key+'_'+field]) || 0;
+  });
+  return total;
+}
+
+function calcWellRingedIn() {
+  // Well: Singles + Doubles*2 from pixel tequilaWell.well
+  const s = parseFloat(STATE.pixel.tequilaWell['well_s']) || 0;
+  const d = parseFloat(STATE.pixel.tequilaWell['well_d']) || 0;
+  return s + d * 2;
+}
+
+function calcTequilaRingedIn() {
+  const s = parseFloat(STATE.pixel.tequilaWell['tequila_s']) || 0;
+  const d = parseFloat(STATE.pixel.tequilaWell['tequila_d']) || 0;
+  return s + d * 2;
+}
+
+function calcPremiumRingedIn() {
+  let total = 0;
+  PIXEL_PREMIUM_CATS.forEach(cat => {
+    const key = cat.replace(/[^a-zA-Z0-9]/g,'_');
+    const s = parseFloat(STATE.pixel.premium[key+'_s']) || 0;
+    const d = parseFloat(STATE.pixel.premium[key+'_d']) || 0;
+    total += s + d * 2;
+  });
+  return total;
+}
+
+function renderBottlesSummary() {
+  let rows = BOTTLES_SECTIONS.map(section => {
+    let totUsage=0, totRinged=0;
+    section.items.forEach(item => {
+      const key = section.key+'_'+item.replace(/[^a-zA-Z0-9]/g,'_');
+      const d = STATE.bottles[key]||{};
+      const o=parseFloat(d.open)||0, r=parseFloat(d.req)||0;
+      const tot=o+r, c=parseFloat(d.close)||0;
+      totUsage += tot-c;
+      totRinged += parseFloat(d.ringedIn)||0;
+    });
+    const v = totRinged - totUsage;
+    return `<tr>
+      <td>${section.label}</td>
+      <td>${totUsage}</td><td>${totRinged}</td>
+      <td class="${v===0?'ok':Math.abs(v)<=2?'warn':'bad'}">${v>=0?'+'+v:v}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="section-label">Bottles & Cans Summary</div>
+  <table class="data-table" style="margin-bottom:16px;">
+    <thead><tr><th>Section</th><th>Usage</th><th>Rung In</th><th>+/−</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function renderDraughtSummaryBar() {
+  const badBrands = DRAUGHT_BRANDS.filter(brand => {
+    const d = STATE.draught[brandKey(brand)]||{};
+    const sleeves = parseFloat(d.sleeves)||0;
+    const hh = parseFloat(d.hh)||0;
+    const oz32 = parseFloat(d.oz32)||0;
+    const oz64 = parseFloat(d.oz64)||0;
+    const convOz = (sleeves*14.5)+(hh*14.5)+(oz32*30)+(oz64*61);
+    const pourOz = parseFloat(d.pourOz)||0;
+    if (!convOz && !pourOz) return false;
+    const variance = pourOz - convOz;
+    const acceptUnder = sleeves * -0.5;
+    const acceptOver = sleeves * 1.0;
+    return variance < acceptUnder || variance > acceptOver;
+  });
+  if (!badBrands.length) return `<div class="section-label">Draught</div><p style="color:var(--green);font-size:0.85rem;">✓ All draught brands within acceptable range</p>`;
+  return `<div class="section-label">Draught — Variances Flagged</div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+    ${badBrands.map(b=>`<span style="background:#3a1a1a;color:var(--red);padding:3px 10px;border-radius:10px;font-size:0.78rem;">${b}</span>`).join('')}
+  </div>`;
+}
+
+// ============================================================
+// SETTERS
+// ============================================================
+function setLiquor(section, key, val) {
+  STATE.liquor[section][key] = val;
+  autoSave(); renderBarSummary();
+}
+function setReq(key, val) {
+  STATE.liquor.reqs[key] = val;
+  autoSave(); renderBarSummary();
+}
+function setWine(section, key, val) {
+  STATE.wine[section][key] = val;
+  autoSave();
+}
+function setDraught(brand, field, val) {
+  if (!STATE.draught[brand]) STATE.draught[brand] = {};
+  STATE.draught[brand][field] = val;
+  autoSave(); renderDraught(); renderBarSummary();
+}
+function setBottle(key, field, val) {
+  if (!STATE.bottles[key]) STATE.bottles[key] = {};
+  STATE.bottles[key][field] = val;
+  autoSave(); renderBottles(); renderBarSummary();
+}
+function setPixel(section, key, val) {
+  STATE.pixel[section][key] = val;
+  autoSave(); renderPixel(); renderBarSummary();
+}
+
+// ============================================================
+// DATE / SHIFT
+// ============================================================
+function setCurrentDate(val) {
+  STATE.currentDate = val;
+  autoSave();
+}
+function setShift(shift, btn) {
+  currentShift = shift;
+  STATE.currentShift = shift;
+  document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  autoSave();
+}
+function setShiftUI(shift) {
+  currentShift = shift;
+  document.querySelectorAll('.shift-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === shift);
+  });
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  event.target.classList.add('active');
+  if (tab === 'bar') renderBarSummary();
+  if (tab === 'history') loadHistory();
+}
+
+// ============================================================
+// PHOTO UPLOAD / AI EXTRACT
+// ============================================================
+function showPhotoUpload(section) {
+  const zone = document.getElementById('uploadZone-'+section);
+  if (!zone) return;
+  zone.style.display = zone.style.display === 'none' ? 'block' : 'none';
+}
+
+async function extractFromPhoto(input, section) {
+  if (!input.files[0]) return;
+  const apiKey = localStorage.getItem('wh_api_key');
+  if (!apiKey) { toast('⚠️ Set your Anthropic API key in Settings first'); return; }
+
+  const statusEl = document.getElementById('aiStatus-'+section);
+  statusEl.innerHTML = '<div class="ai-status loading"><span class="spinner"></span> Reading image with AI...</div>';
+
+  try {
+    const base64 = await fileToBase64(input.files[0]);
+    const mediaType = input.files[0].type || 'image/jpeg';
+    const prompt = buildPrompt(section);
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'x-api-key': apiKey
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error?.message || 'API error');
+
+    const text = data.content[0]?.text || '';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    applyExtraction(section, parsed);
+    statusEl.innerHTML = '<div class="ai-status success">✓ Values extracted — review and confirm</div>';
+    renderAllSections();
+  } catch(e) {
+    statusEl.innerHTML = `<div class="ai-status error">✗ Error: ${escHtml(e.message)}</div>`;
+  }
+  input.value = '';
+}
+
+function buildPrompt(section) {
+  if (section === 'liquor') return `This is a Five & Dive Daily Liquor Weight Sheet. Extract all handwritten values. Return ONLY valid JSON with this structure:
+{"open":{"well_btl":null,"well_oz":null,"tequila_btl":null,"tequila_oz":null,"prem1_btl":null,"prem1_oz":null,"prem2_btl":null,"prem2_oz":null,"prem3_btl":null,"prem3_oz":null,"prem4_btl":null,"prem4_oz":null,"prem5_btl":null,"prem5_oz":null,"prem6_btl":null,"prem6_oz":null,"prem7_btl":null,"prem7_oz":null},"close":{"well_btl":null,"well_oz":null,"tequila_btl":null,"tequila_oz":null,"prem1_btl":null,"prem1_oz":null,"prem2_btl":null,"prem2_oz":null,"prem3_btl":null,"prem3_oz":null,"prem4_btl":null,"prem4_oz":null,"prem5_btl":null,"prem5_oz":null,"prem6_btl":null,"prem6_oz":null,"prem7_btl":null,"prem7_oz":null},"wine":{"open":{"boxRed1":null,"boxRed2":null,"boxRose":null,"boxWhite":null,"vintRed":null,"vintWhite":null},"close":{"boxRed1":null,"boxRed2":null,"boxRose":null,"boxWhite":null,"vintRed":null,"vintWhite":null}}}
+Use null for any value you cannot read clearly. Numbers only for bottle counts and ounces.`;
+
+  if (section === 'draught') return `This is a Five & Dive EverServ Pixel draught sales report. Extract sleeve counts per brand. Return ONLY valid JSON:
+{"draught":{"winterale":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"blue_moon":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"coors_light":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"bud_light":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"sc_red_ale":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"sc_prairie_fairy":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"aprikat_ale":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"canadian":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"dinosour":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"guinness":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"f_d_lager":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"f_d_ipa":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"pilsner":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"f_d_honey":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"mangolorian":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"somersby":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"gi_ipa":{"sleeves":null,"hh":null,"oz32":null,"oz64":null},"pbr":{"sleeves":null,"hh":null,"oz32":null,"oz64":null}}}
+Use null for values not present. HH = happy hour sleeves. 32oz and 64oz are specialty sizes.`;
+
+  if (section === 'bottles') return `This is a Five & Dive bottles and cans inventory sheet. Extract open counts and rung-in amounts per product. Return ONLY valid JSON:
+{"bottles":{}}
+Use product names as keys (lowercase, underscores for spaces). Each product: {"open":null,"req":null,"close":null,"ringedIn":null}`;
+
+  if (section === 'pixel') return `This is a Five & Dive EverServ Pixel Profit by Summary Group report. Extract sales quantities by category. Return ONLY valid JSON:
+{"premium":{},"tequila_s":null,"tequila_d":null,"well_s":null,"well_d":null}
+For premium categories extract singles and doubles where present. Use category names as keys.`;
+
+  return 'Extract all numerical values from this image and return as JSON.';
+}
+
+function applyExtraction(section, data) {
+  if (section === 'liquor') {
+    if (data.open) Object.assign(STATE.liquor.open, data.open);
+    if (data.close) Object.assign(STATE.liquor.close, data.close);
+    if (data.wine?.open) Object.assign(STATE.wine.open, data.wine.open);
+    if (data.wine?.close) Object.assign(STATE.wine.close, data.wine.close);
+  } else if (section === 'draught') {
+    if (data.draught) Object.assign(STATE.draught, data.draught);
+  } else if (section === 'bottles') {
+    if (data.bottles) Object.assign(STATE.bottles, data.bottles);
+  } else if (section === 'pixel') {
+    if (data.premium) Object.assign(STATE.pixel.premium, data.premium);
+    if (data.tequila_s != null) STATE.pixel.tequilaWell['tequila_s'] = data.tequila_s;
+    if (data.tequila_d != null) STATE.pixel.tequilaWell['tequila_d'] = data.tequila_d;
+    if (data.well_s != null) STATE.pixel.tequilaWell['well_s'] = data.well_s;
+    if (data.well_d != null) STATE.pixel.tequilaWell['well_d'] = data.well_d;
+  }
+  autoSave();
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('Read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+// ============================================================
+// SAVE / LOAD RECORDS
+// ============================================================
+function saveRecord() {
+  const key = `${STATE.currentDate}_${STATE.currentShift}`;
+  if (!STATE.records) STATE.records = {};
+  STATE.records[key] = {
+    date: STATE.currentDate,
+    shift: STATE.currentShift,
+    bar: STATE.currentBar,
+    savedAt: new Date().toISOString(),
+    liquor: JSON.parse(JSON.stringify(STATE.liquor)),
+    wine: JSON.parse(JSON.stringify(STATE.wine)),
+    draught: JSON.parse(JSON.stringify(STATE.draught)),
+    bottles: JSON.parse(JSON.stringify(STATE.bottles)),
+    pixel: JSON.parse(JSON.stringify(STATE.pixel)),
+  };
+  saveStateToStorage();
+  pushToD1(key, STATE.records[key]);
+  toast(`✓ Record saved: ${STATE.currentDate} ${STATE.currentShift}`);
+  loadHistory();
+}
+
+function loadRecord(key) {
+  const rec = STATE.records[key];
+  if (!rec) return;
+  STATE.liquor = JSON.parse(JSON.stringify(rec.liquor || {}));
+  STATE.wine = JSON.parse(JSON.stringify(rec.wine || {}));
+  STATE.draught = JSON.parse(JSON.stringify(rec.draught || {}));
+  STATE.bottles = JSON.parse(JSON.stringify(rec.bottles || {}));
+  STATE.pixel = JSON.parse(JSON.stringify(rec.pixel || {}));
+  STATE.currentDate = rec.date;
+  STATE.currentShift = rec.shift;
+  STATE.currentBar = rec.bar || '';
+  document.getElementById('liqDate').value = rec.date;
+  document.getElementById('liqBar').value = rec.bar || '';
+  setShiftUI(rec.shift);
+  renderAllSections();
+  switchTab('liquor');
+  toast(`Loaded: ${rec.date} ${rec.shift}`);
+}
+
+function deleteRecord(key) {
+  if (!confirm('Delete this record?')) return;
+  delete STATE.records[key];
+  saveStateToStorage();
+  loadHistory();
+  toast('Record deleted');
+}
+
+function loadHistory() {
+  const container = document.getElementById('historyList');
+  const records = STATE.records || {};
+  const keys = Object.keys(records).sort().reverse();
+  if (!keys.length) {
+    container.innerHTML = '<p style="color:var(--text2);text-align:center;padding:30px;">No saved records yet.</p>';
+    return;
+  }
+  container.innerHTML = keys.map(k => {
+    const r = records[k];
+    return `<div class="history-item">
+      <div>
+        <div style="font-weight:700;">${r.date} — ${r.shift} Shift</div>
+        <div class="history-meta">${r.bar ? 'Bar: '+r.bar+' · ' : ''}Saved: ${new Date(r.savedAt).toLocaleString()}</div>
+      </div>
+      <div class="history-actions">
+        <button class="btn btn-secondary btn-sm" onclick="loadRecord('${k}')">Load</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecord('${k}')">Del</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// AUTO-SAVE (debounced localStorage)
+// ============================================================
+function autoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => saveStateToStorage(), 800);
+}
+
+function saveStateToStorage() {
+  try {
+    localStorage.setItem('wh_state', JSON.stringify(STATE));
+  } catch(e) {
+    toast('⚠️ Storage full — clear old records');
+  }
+}
+
+function loadStateFromStorage() {
+  const raw = localStorage.getItem('wh_state');
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    STATE = deepMerge(defaultState(), saved);
+  } catch(e) { /* ignore */ }
+}
+
+function deepMerge(defaults, saved) {
+  const out = Object.assign({}, defaults);
+  for (const k in saved) {
+    if (saved[k] && typeof saved[k] === 'object' && !Array.isArray(saved[k])) {
+      out[k] = deepMerge(defaults[k] || {}, saved[k]);
+    } else {
+      out[k] = saved[k];
+    }
+  }
+  return out;
+}
+
+// ============================================================
+// D1 SYNC
+// ============================================================
+function getSettings() {
+  return {
+    workerUrl: localStorage.getItem('wh_worker_url') || '',
+    secret: localStorage.getItem('wh_sync_secret') || '',
+  };
+}
+
+async function pushToD1(key, data) {
+  const { workerUrl, secret } = getSettings();
+  if (!workerUrl || !secret) return;
+  try {
+    await fetch(workerUrl + '/weights', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-FD-Secret': secret },
+      body: JSON.stringify({ key, data: JSON.stringify(data) })
+    });
+  } catch(e) { /* silent — will retry on next manual sync */ }
+}
+
+async function pullFromD1() {
+  const { workerUrl, secret } = getSettings();
+  if (!workerUrl || !secret) return;
+  setSyncBadge('syncing','⟳ Syncing...');
+  try {
+    const resp = await fetch(workerUrl + '/weights', {
+      headers: { 'X-FD-Secret': secret }
+    });
+    if (!resp.ok) throw new Error('HTTP '+resp.status);
+    const data = await resp.json();
+    // Merge remote records into local
+    if (data.records) {
+      if (!STATE.records) STATE.records = {};
+      Object.assign(STATE.records, data.records);
+      saveStateToStorage();
+      loadHistory();
+    }
+    lastSyncTime = new Date();
+    setSyncBadge('synced','✓ Synced');
+    setTimeout(() => setSyncBadge('','⟳ Sync'), 3000);
+  } catch(e) {
+    setSyncBadge('error','⚠ Sync failed');
+  }
+}
+
+function manualSync() { pullFromD1(); }
+
+function scheduleSyncPull() {
+  pullFromD1();
+}
+
+function setSyncBadge(cls, text) {
+  const b = document.getElementById('syncBadge');
+  b.className = 'sync-badge' + (cls ? ' '+cls : '');
+  b.textContent = text;
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function loadSettings() {
+  const apiKey = localStorage.getItem('wh_api_key') || '';
+  const workerUrl = localStorage.getItem('wh_worker_url') || '';
+  const secret = localStorage.getItem('wh_sync_secret') || '';
+  const el = document.getElementById('apiKeyInput');
+  if (el) el.value = apiKey;
+  const wEl = document.getElementById('workerUrlInput');
+  if (wEl) wEl.value = workerUrl;
+  const sEl = document.getElementById('syncSecretInput');
+  if (sEl) sEl.value = secret;
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  localStorage.setItem('wh_api_key', val);
+  toast('✓ API key saved');
+}
+
+function saveSettings() {
+  const workerUrl = document.getElementById('workerUrlInput').value.trim();
+  const secret = document.getElementById('syncSecretInput').value.trim();
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (apiKey) localStorage.setItem('wh_api_key', apiKey);
+  if (workerUrl) localStorage.setItem('wh_worker_url', workerUrl);
+  if (secret) localStorage.setItem('wh_sync_secret', secret);
+  toast('✓ Settings saved');
+}
+
+async function testConnection() {
+  const workerUrl = document.getElementById('workerUrlInput').value.trim();
+  const secret = document.getElementById('syncSecretInput').value.trim();
+  const statusEl = document.getElementById('connStatus');
+  statusEl.innerHTML = '<span style="color:var(--blue);">Testing...</span>';
+  try {
+    const resp = await fetch(workerUrl + '/ping', {
+      headers: { 'X-FD-Secret': secret }
+    });
+    if (resp.ok) {
+      statusEl.innerHTML = '<span style="color:var(--green);">✓ Connected</span>';
+    } else {
+      statusEl.innerHTML = `<span style="color:var(--red);">✗ HTTP ${resp.status}</span>`;
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--red);">✗ Could not reach Worker</span>`;
+  }
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(STATE, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `weights_export_${todayStr()}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function clearAllData() {
+  if (!confirm('Clear all local data? This cannot be undone.')) return;
+  localStorage.removeItem('wh_state');
+  STATE = defaultState();
+  renderAllSections();
+  loadHistory();
+  toast('Local data cleared');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function toast(msg, duration=2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
