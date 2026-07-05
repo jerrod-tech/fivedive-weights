@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>F&D Weights</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--panel:#1c2128;--border:#30363d;
+  --text:#e6edf3;--muted:#7d8590;--green:#38bd82;--red:#e05c5c;
+  --amber:#c8952b;--blue:#58a6ff;--radius:12px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+.screen{display:none;flex-direction:column;flex:1;padding:20px;max-width:480px;margin:0 auto;width:100%}
+.screen.active{display:flex}
+.app-header{text-align:center;padding:20px 0 16px}
+.app-logo{font-size:26px;font-weight:900;color:var(--green)}
+.app-logo span{color:var(--amber)}
+.app-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;border-radius:var(--radius);border:none;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;margin-bottom:10px}
+.btn:active{opacity:.75}
+.btn-green{background:var(--green);color:#000}
+.btn-ghost{background:var(--panel);border:1px solid var(--border);color:var(--text)}
+.btn-amber{background:var(--amber);color:#000}
+.btn-sm{padding:9px 14px;font-size:13px;width:auto;margin-bottom:0}
+/* PIN / clock-in */
+.pin-display{display:flex;justify-content:center;gap:10px;margin:20px 0}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:background .15s}
+.pin-dot.filled{background:var(--green);border-color:var(--green)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.pin-key{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-size:22px;font-weight:700;text-align:center;cursor:pointer;user-select:none}
+.pin-key:active{background:var(--border)}
+.pin-msg{text-align:center;font-size:13px;min-height:18px;margin-bottom:10px}
+.pin-msg.err{color:var(--red)}
+.pin-msg.ok{color:var(--green)}
+/* welcome */
+.welcome-name{font-size:24px;font-weight:900;color:var(--green);text-align:center;margin-bottom:4px}
+.welcome-role{font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px}
+/* shift */
+.shift-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.shift-btn{background:var(--panel);border:2px solid var(--border);border-radius:var(--radius);padding:16px 8px;text-align:center;cursor:pointer;transition:all .15s}
+.shift-btn:active{opacity:.75}
+.shift-btn.sel{border-color:var(--green);background:rgba(56,189,130,.1)}
+.shift-btn .si{font-size:22px;margin-bottom:5px}
+.shift-btn .sl{font-size:11px;font-weight:700}
+/* photo */
+.photo-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:28px 16px;text-align:center;cursor:pointer;margin-bottom:14px;position:relative;overflow:hidden}
+.photo-zone:active{border-color:var(--green)}
+.photo-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.pz-icon{font-size:36px;margin-bottom:6px}
+.pz-text{font-size:13px;color:var(--muted)}
+.photo-preview{width:100%;border-radius:var(--radius);margin-bottom:10px;display:none;max-height:240px;object-fit:cover}
+.photo-preview.show{display:block}
+/* verify */
+.verify-card{background:var(--panel);border:2px solid var(--amber);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.verify-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);margin-bottom:12px}
+.verify-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.verify-row:last-child{border-bottom:none}
+.vr-label{font-size:13px;color:var(--muted)}
+.vr-input-wrap{display:flex;align-items:center;gap:6px}
+.adj-input{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:20px;font-weight:700;text-align:center}
+.vr-unit{color:var(--muted);font-size:12px}
+/* category */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.cat-btn{background:var(--panel);border:2px solid var(--border);border-radius:var(--radius);padding:18px 6px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s}
+.cat-btn:active{opacity:.75}
+.cat-btn.well.sel{border-color:#38bd82;background:rgba(56,189,130,.12);color:#38bd82}
+.cat-btn.tequila.sel{border-color:#c8952b;background:rgba(200,149,43,.12);color:#c8952b}
+.cat-btn.premium.sel{border-color:#58a6ff;background:rgba(88,166,255,.12);color:#58a6ff}
+/* bins list */
+.bin-row{display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--bg2);border-radius:8px;margin-bottom:6px}
+.bin-tag{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:2px 7px;border-radius:4px;flex-shrink:0}
+.bin-tag.well{background:rgba(56,189,130,.2);color:#38bd82}
+.bin-tag.tequila{background:rgba(200,149,43,.2);color:#c8952b}
+.bin-tag.premium{background:rgba(88,166,255,.2);color:#58a6ff}
+.bin-info{flex:1;font-size:12px;color:var(--text)}
+.bin-info small{color:var(--muted);font-size:11px;display:block}
+.bin-del{background:none;border:none;color:var(--red);font-size:15px;cursor:pointer;padding:3px 6px}
+/* totals */
+.totals-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0}
+.totals-row .tr-cat{font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px}
+.totals-row .tr-val{font-size:13px;color:var(--text)}
+/* submissions today */
+.sub-item{background:var(--bg2);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.sub-item .si-header{display:flex;justify-content:space-between;margin-bottom:5px}
+.sub-item .si-shift{font-size:11px;font-weight:700;color:var(--amber)}
+.sub-item .si-time{font-size:11px;color:var(--muted)}
+.sub-item .si-bins{font-size:12px;color:var(--text);line-height:1.7}
+/* spinner */
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* toast */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9999;white-space:nowrap}
+#toast.show{opacity:1}
+.section-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
+</style>
+</head>
+<body>
+
+<!-- ══ SCREEN: CLOCK-IN ══ -->
+<div class="screen active" id="scr-login">
+  <div class="app-header">
+    <div class="app-logo">Five <span>&</span> Dive</div>
+    <div class="app-sub">Bar Weights · Enter Clock-In ID</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Your clock-in ID</div>
+    <div class="pin-display" id="pinDisplay">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+      <div class="pin-dot" id="pd4"></div>
+    </div>
+    <div id="pinTyped" style="text-align:center;font-size:28px;font-weight:700;font-family:monospace;letter-spacing:8px;min-height:38px;color:var(--green);margin-bottom:4px"></div>
+    <div id="pinCount" style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:6px;min-height:16px"></div>
+    <div class="pin-msg" id="pinMsg"></div>
+    <div class="pin-grid">
+      <div class="pin-key" onclick="pk('1')">1</div>
+      <div class="pin-key" onclick="pk('2')">2</div>
+      <div class="pin-key" onclick="pk('3')">3</div>
+      <div class="pin-key" onclick="pk('4')">4</div>
+      <div class="pin-key" onclick="pk('5')">5</div>
+      <div class="pin-key" onclick="pk('6')">6</div>
+      <div class="pin-key" onclick="pk('7')">7</div>
+      <div class="pin-key" onclick="pk('8')">8</div>
+      <div class="pin-key" onclick="pk('9')">9</div>
+      <div class="pin-key" onclick="pk('clr')" style="font-size:13px;color:var(--muted)">CLR</div>
+      <div class="pin-key" onclick="pk('0')">0</div>
+      <div class="pin-key" onclick="pk('back')">⌫</div>
+    </div>
+    <button class="btn btn-green" onclick="doLogin()">Sign In →</button>
+  </div>
+  <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:4px">Use the clock-in ID from your Push schedule · Ask a manager if you don't have it</p>
+</div>
+
+<!-- ══ SCREEN: SHIFT SELECT ══ -->
+<div class="screen" id="scr-shift">
+  <div class="app-header">
+    <div class="welcome-name" id="welcomeName">Hey!</div>
+    <div class="welcome-role" id="welcomeRole"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">What are you submitting?</div>
+    <div class="shift-grid">
+      <div class="shift-btn" onclick="selShift('morning')" id="sb-morning"><div class="si">☀️</div><div class="sl">Morning Open</div></div>
+      <div class="shift-btn" onclick="selShift('changeover')" id="sb-changeover"><div class="si">🔄</div><div class="sl">Changeover</div></div>
+      <div class="shift-btn" onclick="selShift('closing')" id="sb-closing"><div class="si">🌙</div><div class="sl">Closing</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Your submissions today</div>
+    <div id="mySubsToday"><div style="font-size:12px;color:var(--muted);text-align:center;padding:8px">None yet</div></div>
+  </div>
+  <button class="btn btn-ghost" onclick="signOut()" style="margin-top:auto">Sign Out</button>
+</div>
+
+<!-- ══ SCREEN: PHOTO ══ -->
+<div class="screen" id="scr-photo">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <button class="btn btn-ghost btn-sm" onclick="showScreen('scr-shift')" style="width:auto">← Back</button>
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:15px" id="photoShiftLabel">Morning Open</div>
+      <div style="font-size:12px;color:var(--muted)" id="photoBinCounter">Bin 1</div>
+    </div>
+  </div>
+  <div id="binsPreview" style="margin-bottom:10px"></div>
+  <div class="card">
+    <div class="card-title">📷 Photo — scale + all bottles visible</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Point camera so the <strong style="color:var(--text)">scale display</strong> and <strong style="color:var(--text)">all bottles</strong> are clear in frame.</p>
+    <img id="photoPreview" class="photo-preview" src="" alt="">
+    <!-- Two explicit buttons — camera OR library -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px" id="photoZone">
+      <div onclick="document.getElementById('inputCamera').click()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--bg2);border:2px dashed var(--border);border-radius:var(--radius);padding:20px 10px;cursor:pointer;text-align:center">
+        <span style="font-size:28px">📷</span>
+        <span style="font-weight:700;color:var(--text);font-size:13px">Take Photo</span>
+        <span style="font-size:11px;color:var(--muted)">Open camera</span>
+      </div>
+      <div onclick="document.getElementById('inputLibrary').click()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--bg2);border:2px dashed var(--border);border-radius:var(--radius);padding:20px 10px;cursor:pointer;text-align:center">
+        <span style="font-size:28px">🖼️</span>
+        <span style="font-weight:700;color:var(--text);font-size:13px">Choose Photo</span>
+        <span style="font-size:11px;color:var(--muted)">From library</span>
+      </div>
+    </div>
+    <!-- Inputs kept outside the visible UI — capture only on camera input -->
+    <input type="file" id="inputCamera"  accept="image/*" capture="environment" onchange="photoChosen(event)" style="display:none">
+    <input type="file" id="inputLibrary" accept="image/*" onchange="photoChosen(event)" style="display:none">
+    <div id="photoStatus" style="min-height:18px;text-align:center;font-size:13px;color:var(--muted);margin-top:6px"></div>
+  </div>
+  <button class="btn btn-ghost" onclick="showScreen('scr-shift')">Cancel</button>
+</div>
+
+<!-- ══ SCREEN: VERIFY ══ -->
+<div class="screen" id="scr-verify">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <button class="btn btn-ghost btn-sm" onclick="retakePhoto()" style="width:auto">← Retake</button>
+    <div style="flex:1;font-weight:700;font-size:15px">Verify Reading</div>
+  </div>
+  <img id="verifyThumb" style="width:100%;border-radius:var(--radius);margin-bottom:12px;max-height:200px;object-fit:cover" src="" alt="">
+  <div class="verify-card">
+    <div class="verify-title">⚠️ AI Read — Please Confirm or Correct</div>
+    <div class="verify-row">
+      <span class="vr-label">Scale reading</span>
+      <div class="vr-input-wrap">
+        <input class="adj-input" id="vOz" type="number" step="0.1" style="width:100px" oninput="checkReady()">
+        <span class="vr-unit">oz</span>
+      </div>
+    </div>
+    <div class="verify-row">
+      <span class="vr-label">Bottle count</span>
+      <div class="vr-input-wrap">
+        <input class="adj-input" id="vBtl" type="number" style="width:70px" oninput="checkReady()">
+        <span class="vr-unit">btl</span>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">What category is this bin?</div>
+    <div class="cat-grid">
+      <div class="cat-btn well" id="cat-Well" onclick="selCat('Well')">Well</div>
+      <div class="cat-btn tequila" id="cat-Tequila" onclick="selCat('Tequila')">Tequila</div>
+      <div class="cat-btn premium" id="cat-Premium" onclick="selCat('Premium')">Premium</div>
+    </div>
+  </div>
+  <button class="btn btn-green" id="confirmBinBtn" onclick="confirmBin()" disabled style="opacity:.5">✓ Confirm This Bin</button>
+  <button class="btn btn-ghost" onclick="retakePhoto()">← Retake Photo</button>
+</div>
+
+<!-- ══ SCREEN: MORE BINS ══ -->
+<div class="screen" id="scr-more">
+  <div style="margin-bottom:16px">
+    <div style="font-weight:700;font-size:17px;margin-bottom:3px">Bin confirmed ✓</div>
+    <div style="font-size:12px;color:var(--muted)" id="moreBinsShift"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Bins recorded</div>
+    <div id="moreBinsList"></div>
+    <div id="moreBinsTotals" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"></div>
+  </div>
+  <button class="btn btn-amber" onclick="addBin()">+ Add Another Bin</button>
+  <button class="btn btn-green" onclick="renderSubmitScreen();showScreen('scr-submit')">✓ Done — Review & Submit</button>
+  <button class="btn btn-ghost" onclick="showScreen('scr-shift')">Cancel</button>
+</div>
+
+<!-- ══ SCREEN: SUBMIT ══ -->
+<div class="screen" id="scr-submit">
+  <div style="margin-bottom:16px">
+    <div style="font-weight:700;font-size:17px;margin-bottom:3px">Review & Submit</div>
+    <div style="font-size:12px;color:var(--muted)" id="submitShiftLabel"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Summary</div>
+    <div id="submitBinsList"></div>
+    <div id="submitTotals" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"></div>
+  </div>
+  <div class="card" style="background:rgba(56,189,130,.05);border-color:rgba(56,189,130,.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:700;font-size:14px" id="submitStaffName"></div>
+        <div style="font-size:12px;color:var(--muted)" id="submitDateTime"></div>
+      </div>
+      <div style="font-size:22px">✅</div>
+    </div>
+  </div>
+  <button class="btn btn-green" onclick="submitWeights()" id="submitBtn">📤 Send to Manager</button>
+  <button class="btn btn-ghost" onclick="showScreen('scr-more')">← Back</button>
+</div>
+
+<!-- ══ SCREEN: SUCCESS ══ -->
+<div class="screen" id="scr-success">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px">
+    <div style="font-size:60px;margin-bottom:14px">✅</div>
+    <div style="font-size:21px;font-weight:700;margin-bottom:6px">Sent!</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:28px" id="successMsg"></div>
+    <button class="btn btn-green" onclick="goToShiftSelect()" style="max-width:260px">Submit Another Shift</button>
+    <button class="btn btn-ghost" onclick="signOut()" style="max-width:260px">Sign Out</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════
+// STAFF DIRECTORY — embedded from CC
+// ═══════════════════════════════════
+const STAFF = [
+  {name:"Sam Ali",role:"Host / Security",clockId:"1319"},
+  {name:"Chris Allard",role:"Head of Security",clockId:"3662"},
+  {name:"Atlas Anderson",role:"Host / Security",clockId:"8409"},
+  {name:"Brenda Arias",role:"Cash",clockId:"33100"},
+  {name:"Eric Bilan",role:"Bartender",clockId:"4725"},
+  {name:"Carter Campbell",role:"Bartender",clockId:"7539"},
+  {name:"Alyssa Caron",role:"Host / Security",clockId:"1107"},
+  {name:"Alyssa Carson",role:"Cash",clockId:"9309"},
+  {name:"Giovonna Carson",role:"Cash",clockId:"34311"},
+  {name:"Paige Chapman",role:"Server",clockId:"6544"},
+  {name:"Lucija Cincak",role:"Server",clockId:"4002"},
+  {name:"Bennett Collin",role:"Line Cook",clockId:"7326"},
+  {name:"Ethan Cruces",role:"Line Cook",clockId:"7208"},
+  {name:"Kayla Doyle",role:"Server",clockId:"2792"},
+  {name:"Celine Eid",role:"Line Cook",clockId:"2963"},
+  {name:"Haley Ford",role:"Server",clockId:"1700"},
+  {name:"Brittney Haas",role:"Server",clockId:"7576"},
+  {name:"MacKenzie Irving-Sparling",role:"Server",clockId:"5489"},
+  {name:"Lauryn LeBlanc",role:"Server",clockId:"9205"},
+  {name:"Marc Levers",role:"Director of Operations / FOH Manager",clockId:"7627"},
+  {name:"Katelyn Marling",role:"Server",clockId:"3355"},
+  {name:"Destiny McIntyre",role:"Server",clockId:"2738"},
+  {name:"Jay Mclean",role:"Bartender",clockId:"3068"},
+  {name:"Colin Moses",role:"Line Cook",clockId:"731"},
+  {name:"Sarica Osman",role:"Line Cook",clockId:"6630"},
+  {name:"Gregg Reib",role:"Line Cook",clockId:"3310"},
+  {name:"Carrington Ryan",role:"Server",clockId:"3745"},
+  {name:"Brent Schacher",role:"Executive Chef",clockId:"9089"},
+  {name:"Alex Schimpf",role:"Line Cook",clockId:"5598"},
+  {name:"Braelynn Simard",role:"Cash",clockId:"315"},
+  {name:"Hugo Sirett",role:"Bartender",clockId:"6484"},
+  {name:"Payton Smith",role:"Bar Manager",clockId:"8724"},
+  {name:"Matt St. Jean",role:"BOH Manager",clockId:"8610"},
+  {name:"Marcus Strickland",role:"Line Cook",clockId:"8054"},
+  {name:"Jerrod Sutherland",role:"General Manager / Owner",clockId:"600"},
+  {name:"Reese Thomas",role:"Bartender",clockId:"4028"},
+  {name:"Whitney Van Blokland",role:"BOH Manager",clockId:"27"},
+  {name:"Austin Vanier",role:"Line Cook",clockId:"5522"},
+  {name:"Corey Watson",role:"Line Cook",clockId:"6898"}
+];
+
+// ═══════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════
+const WORKER_URL = 'https://fd-cc-sync.jlsutherland24.workers.dev';
+const FD_SECRET  = 'FiveAndDive2024';
+
+// ═══════════════════════════════════
+// STATE
+// ═══════════════════════════════════
+let currentUser  = null; // {name, role, clockId}
+let currentShift = null;
+let currentBins  = [];
+let currentPhoto = null; // dataUrl
+let selectedCat  = null;
+let pinBuffer    = '';
+
+// ═══════════════════════════════════
+// SCREENS
+// ═══════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════
+// LOGIN — clock-in ID
+// ═══════════════════════════════════
+function pk(k) {
+  if (k === 'clr')  { pinBuffer = ''; }
+  else if (k === 'back') { pinBuffer = pinBuffer.slice(0,-1); }
+  else if (pinBuffer.length < 6) { pinBuffer += k; }
+  // Update display
+  document.getElementById('pinTyped').textContent = pinBuffer.replace(/./g,'•');
+  document.getElementById('pinMsg').textContent = '';
+  document.getElementById('pinMsg').className = 'pin-msg';
+  // Show digit count so user knows how many entered
+  const countEl = document.getElementById('pinCount');
+  if (countEl) countEl.textContent = pinBuffer.length ? pinBuffer.length + ' digit' + (pinBuffer.length>1?'s':'') + ' entered' : '';
+  // Auto-login if ID matches exactly (saves tapping Sign In)
+  if (pinBuffer.length >= 2) {
+    const match = STAFF.find(s => s.clockId === pinBuffer) ||
+                  STAFF.find(s => parseInt(s.clockId) === parseInt(pinBuffer));
+    if (match) setTimeout(doLogin, 300);
+  }
+}
+
+function doLogin() {
+  const id = pinBuffer.trim();
+  if (!id) { showPinMsg('Enter your clock-in ID', 'err'); return; }
+  // Try exact match first, then try with/without leading zeros
+  const staff = STAFF.find(s => s.clockId === id) ||
+                STAFF.find(s => parseInt(s.clockId) === parseInt(id));
+  if (!staff) {
+    showPinMsg('ID not recognised — ask your manager', 'err');
+    pinBuffer = '';
+    document.getElementById('pinTyped').textContent = '';
+    document.getElementById('pinCount').textContent = '';
+    return;
+  }
+  currentUser = staff;
+  pinBuffer = '';
+  document.getElementById('pinTyped').textContent = '';
+  const pc = document.getElementById('pinCount'); if(pc) pc.textContent = '';
+  document.getElementById('welcomeName').textContent = 'Hey, ' + staff.name.split(' ')[0] + '!';
+  document.getElementById('welcomeRole').textContent = staff.role;
+  renderMySubsToday();
+  showScreen('scr-shift');
+}
+
+function showPinMsg(msg, type) {
+  const el = document.getElementById('pinMsg');
+  el.textContent = msg;
+  el.className = 'pin-msg ' + (type||'');
+}
+
+function signOut() {
+  currentUser = null;
+  currentShift = null;
+  currentBins = [];
+  showScreen('scr-login');
+}
+
+// ═══════════════════════════════════
+// SHIFT SELECT
+// ═══════════════════════════════════
+const SHIFT_LABELS = {morning:'☀️ Morning Open', changeover:'🔄 Changeover', closing:'🌙 Closing'};
+
+function selShift(shift) {
+  currentShift = shift;
+  currentBins  = [];
+  currentPhoto = null;
+  document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('sb-'+shift).classList.add('sel');
+  document.getElementById('photoShiftLabel').textContent = SHIFT_LABELS[shift];
+  updateBinCounter();
+  resetPhotoScreen();
+  showScreen('scr-photo');
+}
+
+function goToShiftSelect() {
+  currentBins = [];
+  currentShift = null;
+  document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('sel'));
+  renderMySubsToday();
+  showScreen('scr-shift');
+}
+
+// ═══════════════════════════════════
+// PHOTO
+// ═══════════════════════════════════
+function resetPhotoScreen() {
+  document.getElementById('photoPreview').classList.remove('show');
+  document.getElementById('photoZone').style.display = 'grid';
+  document.getElementById('photoStatus').textContent = '';
+  document.getElementById('photoFileInput').value = '';
+  renderBinsPreview();
+}
+
+function updateBinCounter() {
+  document.getElementById('photoBinCounter').textContent = 'Bin ' + (currentBins.length + 1);
+  renderBinsPreview();
+}
+
+function renderBinsPreview() {
+  const el = document.getElementById('binsPreview');
+  if (!currentBins.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="section-label">Bins added so far</div>' +
+    currentBins.map((b,i) => binRow(b,i)).join('');
+}
+
+function photoChosen(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    currentPhoto = ev.target.result;
+    const prev = document.getElementById('photoPreview');
+    prev.src = currentPhoto;
+    prev.classList.add('show');
+    document.getElementById('photoZone').style.display = 'none';
+    runExtraction(currentPhoto);
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+async function runExtraction(dataUrl) {
+  const status = document.getElementById('photoStatus');
+  status.innerHTML = '<span class="spinner"></span> Reading scale & counting bottles…';
+  const base64    = dataUrl.split(',')[1];
+  const mediaType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
+  let oz = null, bottles = null;
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:128,
+        system:'You are reading a photo of liquor bottles in a bin sitting on a scale. Extract: (1) the scale reading shown on the digital display in oz, and (2) count every bottle visible in the bin. Reply ONLY with JSON: {"oz":574.5,"bottles":15}. Use null if you cannot read the scale display clearly.',
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+          {type:'text',text:'Read scale oz and count bottles. JSON only.'}
+        ]}]
+      })
+    });
+    if (resp.ok) {
+      const d = await resp.json();
+      const text = d.content?.[0]?.text||'';
+      const parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+      oz = parsed.oz; bottles = parsed.bottles;
+    }
+  } catch(e) { console.warn('AI extraction failed:', e); }
+
+  status.textContent = '';
+  // Prep verify screen
+  document.getElementById('verifyThumb').src = currentPhoto;
+  document.getElementById('vOz').value   = oz ?? '';
+  document.getElementById('vBtl').value  = bottles ?? '';
+  selectedCat = null;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('sel'));
+  const btn = document.getElementById('confirmBinBtn');
+  btn.disabled = true; btn.style.opacity = '.5';
+  if (!oz && !bottles) toast('Could not auto-read — enter values manually');
+  showScreen('scr-verify');
+}
+
+function retakePhoto() {
+  resetPhotoScreen();
+  showScreen('scr-photo');
+}
+
+// ═══════════════════════════════════
+// VERIFY
+// ═══════════════════════════════════
+function selCat(cat) {
+  selectedCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('cat-'+cat).classList.add('sel');
+  checkReady();
+}
+
+function checkReady() {
+  const oz  = parseFloat(document.getElementById('vOz').value);
+  const btl = parseInt(document.getElementById('vBtl').value);
+  const ok  = selectedCat && !isNaN(oz) && oz > 0 && !isNaN(btl) && btl >= 0;
+  const btn = document.getElementById('confirmBinBtn');
+  btn.disabled = !ok; btn.style.opacity = ok ? '1' : '.5';
+}
+
+function confirmBin() {
+  const oz      = parseFloat(document.getElementById('vOz').value);
+  const bottles = parseInt(document.getElementById('vBtl').value);
+  currentBins.push({ cat:selectedCat, oz, bottles, binNum:currentBins.length+1, photo:currentPhoto });
+  selectedCat = null; currentPhoto = null;
+  // Render more-bins screen
+  renderMoreBinsScreen();
+  showScreen('scr-more');
+}
+
+// ═══════════════════════════════════
+// MORE BINS
+// ═══════════════════════════════════
+function binRow(b, i, removable=true) {
+  return `<div class="bin-row">
+    <span class="bin-tag ${b.cat.toLowerCase()}">${b.cat}</span>
+    <span class="bin-info">${b.oz} oz · ${b.bottles} bottles<small>Bin ${b.binNum}</small></span>
+    ${removable ? `<button class="bin-del" onclick="removeBin(${i})">✕</button>` : ''}
+  </div>`;
+}
+
+function catTotals() {
+  const t = {};
+  currentBins.forEach(b => {
+    if (!t[b.cat]) t[b.cat] = {oz:0,bottles:0,bins:0};
+    t[b.cat].oz += b.oz; t[b.cat].bottles += b.bottles; t[b.cat].bins++;
+  });
+  return t;
+}
+
+function totalsHtml() {
+  const t = catTotals();
+  return Object.entries(t).map(([cat,v]) =>
+    `<div class="totals-row">
+      <span class="bin-tag ${cat.toLowerCase()} tr-cat">${cat}</span>
+      <span class="tr-val">${v.oz.toFixed(1)} oz total · ${v.bottles} btl (${v.bins} bin${v.bins>1?'s':''})</span>
+    </div>`
+  ).join('');
+}
+
+function renderMoreBinsScreen() {
+  document.getElementById('moreBinsShift').textContent = SHIFT_LABELS[currentShift];
+  document.getElementById('moreBinsList').innerHTML = currentBins.map((b,i) => binRow(b,i)).join('');
+  document.getElementById('moreBinsTotals').innerHTML = totalsHtml();
+}
+
+function removeBin(i) {
+  currentBins.splice(i,1);
+  currentBins.forEach((b,idx) => b.binNum = idx+1);
+  if (!currentBins.length) { showScreen('scr-photo'); return; }
+  renderMoreBinsScreen();
+}
+
+function addBin() {
+  updateBinCounter();
+  resetPhotoScreen();
+  showScreen('scr-photo');
+}
+
+// ═══════════════════════════════════
+// SUBMIT SCREEN
+// ═══════════════════════════════════
+function renderSubmitScreen() {
+  document.getElementById('submitShiftLabel').textContent = SHIFT_LABELS[currentShift];
+  document.getElementById('submitBinsList').innerHTML = currentBins.map((b,i) => binRow(b,i,false)).join('');
+  document.getElementById('submitTotals').innerHTML = totalsHtml();
+  document.getElementById('submitStaffName').textContent = currentUser?.name || '';
+  document.getElementById('submitDateTime').textContent = new Date().toLocaleString('en-CA',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+// showScreen already defined above — extend it to fire submit event
+// renderSubmitScreen() is called explicitly before showScreen('scr-submit')
+
+// ═══════════════════════════════════
+// SUBMIT
+// ═══════════════════════════════════
+async function submitWeights() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Sending…';
+
+  // Business day key (rollover at 6am)
+  const now = new Date();
+  const rolled = new Date(now); rolled.setHours(rolled.getHours()-6);
+  const dayKey = rolled.toISOString().slice(0,10);
+
+  const submission = {
+    id:           'ws_' + Date.now() + '_' + (currentUser?.clockId||'x'),
+    dayKey,
+    shift:        currentShift,
+    staffName:    currentUser?.name || 'Unknown',
+    staffRole:    currentUser?.role || '',
+    clockId:      currentUser?.clockId || '',
+    submittedAt:  new Date().toISOString(),
+    bins: currentBins.map(b => ({
+      cat:     b.cat,
+      oz:      b.oz,
+      bottles: b.bottles,
+      binNum:  b.binNum,
+      photo:   b.photo ? smallThumb(b.photo) : null
+    }))
+  };
+
+  // Save locally first
+  saveLocal(submission);
+
+  try {
+    const r = await fetch(WORKER_URL + '/weights/submit', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-FD-Secret':FD_SECRET},
+      body: JSON.stringify({dayKey, submission})
+    });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    document.getElementById('successMsg').textContent =
+      SHIFT_LABELS[currentShift] + ' weights sent · Manager will see them now.';
+  } catch(e) {
+    document.getElementById('successMsg').textContent =
+      'Saved locally · Will sync automatically when back online.';
+    toast('Offline — saved locally');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '📤 Send to Manager';
+  showScreen('scr-success');
+}
+
+// ═══════════════════════════════════
+// LOCAL STORAGE
+// ═══════════════════════════════════
+function saveLocal(sub) {
+  try {
+    const all = JSON.parse(localStorage.getItem('fd_wt_subs')||'[]');
+    all.unshift(sub);
+    localStorage.setItem('fd_wt_subs', JSON.stringify(all.slice(0,50)));
+  } catch(e){}
+}
+
+function mySubsToday() {
+  const now = new Date();
+  const rolled = new Date(now); rolled.setHours(rolled.getHours()-6);
+  const today = rolled.toISOString().slice(0,10);
+  try {
+    const all = JSON.parse(localStorage.getItem('fd_wt_subs')||'[]');
+    return all.filter(s => s.dayKey === today && s.clockId === currentUser?.clockId);
+  } catch(e){ return []; }
+}
+
+function renderMySubsToday() {
+  const el = document.getElementById('mySubsToday');
+  const subs = mySubsToday();
+  if (!subs.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px">None yet today</div>';
+    return;
+  }
+  el.innerHTML = subs.map(s => {
+    const time = new Date(s.submittedAt).toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="sub-item">
+      <div class="si-header">
+        <span class="si-shift">${SHIFT_LABELS[s.shift]||s.shift}</span>
+        <span class="si-time">${time}</span>
+      </div>
+      <div class="si-bins">${s.bins.map(b=>`<span class="bin-tag ${b.cat.toLowerCase()}" style="font-size:10px;display:inline-block;margin-right:4px">${b.cat}</span> ${b.oz} oz · ${b.bottles} btl`).join('<br>')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+// UTILS
+// ═══════════════════════════════════
+function smallThumb(dataUrl) {
+  try {
+    const img = new Image(); img.src = dataUrl;
+    const s = Math.min(1, 600/Math.max(img.naturalWidth||600,img.naturalHeight||400));
+    const c = document.createElement('canvas');
+    c.width=(img.naturalWidth||600)*s; c.height=(img.naturalHeight||400)*s;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    return c.toDataURL('image/jpeg',0.65);
+  } catch(e){ return dataUrl; }
+}
+
+function toast(msg,dur=2500){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+</script>
+</body>
+</html>
