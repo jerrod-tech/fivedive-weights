@@ -470,31 +470,63 @@ async function buildSubmissionBins(dayKey) {
   return out;
 }
 
+function normalizeReaderNumber(value) {
+  if (value === null || value === undefined || value === '') return null;
+  var num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
+function withTimeout(promise, ms, label) {
+  return new Promise(function(resolve, reject) {
+    var done = false;
+    var timer = setTimeout(function() {
+      if (done) return;
+      done = true;
+      reject(new Error((label || 'Request') + ' timed out'));
+    }, ms);
+    promise.then(function(value) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(value);
+    }).catch(function(err) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
+}
+
+async function readPhotoViaWorker(dataUrl) {
+  var readImage = await compressPhotoDataUrl(dataUrl, 900, 0.68);
+  var resp = await withTimeout(fetch(WORKER + '/weights/read-photo', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-FD-Secret':SECRET},
+    body: JSON.stringify({
+      image: readImage,
+      source: 'fivedive-weights',
+      maxSpend: 'lowest'
+    })
+  }), 18000, 'AI reader');
+  if (!resp.ok) throw new Error('AI reader HTTP ' + resp.status);
+  var data = await resp.json();
+  if (data && data.ok === false) throw new Error(data.error || 'AI reader unavailable');
+  return {
+    oz: normalizeReaderNumber(data.oz !== undefined ? data.oz : data.scale_weight),
+    bottles: normalizeReaderNumber(data.bottles !== undefined ? data.bottles : data.bottle_count),
+    confidence: normalizeReaderNumber(data.confidence)
+  };
+}
+
 async function runAI(dataUrl) {
   document.getElementById('photoStatus').innerHTML = '<span class="spinner"></span> Reading scale & counting bottles…';
-  var b64  = dataUrl.split(',')[1];
-  var mime = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
   var oz = null, btl = null;
   try {
-    var r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 128,
-        system: 'Read this photo of liquor bottles in a bin on a scale. Return ONLY JSON: {"oz":574.5,"bottles":15}. oz = scale display reading, bottles = count of bottles visible. Use null if scale not readable.',
-        messages: [{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:mime,data:b64}},
-          {type:'text',text:'JSON only.'}
-        ]}]
-      })
-    });
-    if (r.ok) {
-      var d = await r.json();
-      var txt = (d.content && d.content[0] && d.content[0].text) || '';
-      var parsed = JSON.parse(txt.replace(/```json|```/g,'').trim());
-      oz = parsed.oz; btl = parsed.bottles;
-    }
-  } catch(e) { console.warn('AI fail:', e); }
+    var read = await readPhotoViaWorker(dataUrl);
+    oz = read.oz;
+    btl = read.bottles;
+  } catch(e) { console.warn('AI reader fail:', e); }
   document.getElementById('photoStatus').textContent = '';
   document.getElementById('verifyThumb').src = photo;
   document.getElementById('vOz').value  = oz  !== null ? oz  : '';
@@ -504,7 +536,7 @@ async function runAI(dataUrl) {
   var btn = document.getElementById('confirmBtn');
   btn.disabled = true; btn.style.opacity = '.4';
   if (!oz && !btl) {
-    toast('Scale not visible in photo — enter values manually below');
+    toast('AI reader unavailable — enter values to continue');
   } else if (!oz) {
     toast('Could not read scale — enter oz manually');
   }
