@@ -499,7 +499,7 @@ function withTimeout(promise, ms, label) {
 }
 
 async function readPhotoViaWorker(dataUrl) {
-  var readImage = await compressPhotoDataUrl(dataUrl, 900, 0.68);
+  var readImage = await compressPhotoDataUrl(dataUrl, 1400, 0.72);
   var resp = await withTimeout(fetch(WORKER + '/weights/read-photo', {
     method: 'POST',
     headers: {'Content-Type':'application/json','X-FD-Secret':SECRET},
